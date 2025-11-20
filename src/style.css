@@ -1,0 +1,155 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: system-ui, -apple-system, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: #213547;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-attachment: fixed;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  place-items: center;
+  padding: 1rem;
+}
+
+#app {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.container {
+  background: white;
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+h1 {
+  font-size: 2.5rem;
+  line-height: 1.2;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: #667eea;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.info {
+  text-align: center;
+  color: #666;
+  line-height: 1.8;
+  font-size: 1rem;
+}
+
+.buttons-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.audio-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem 1.5rem;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  min-height: 120px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.audio-button:active,
+.audio-button.playing {
+  transform: scale(0.95);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.6);
+}
+
+.audio-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.button-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.button-text {
+  font-size: 1rem;
+  word-break: break-word;
+  text-align: center;
+}
+
+/* モバイル向けの調整 */
+@media (max-width: 480px) {
+  .container {
+    padding: 1.5rem;
+    border-radius: 20px;
+  }
+
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .buttons-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .audio-button {
+    padding: 1.5rem 1rem;
+    min-height: 100px;
+    font-size: 1rem;
+  }
+
+  .button-icon {
+    font-size: 2rem;
+  }
+
+  .button-text {
+    font-size: 0.9rem;
+  }
+}
+
+/* タブレット向け */
+@media (min-width: 481px) and (max-width: 768px) {
+  .buttons-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 大きな画面向け */
+@media (min-width: 769px) {
+  .buttons-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
