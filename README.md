@@ -52,3 +52,23 @@ npm run cap:open
 
 その後、Android StudioからAPKをビルドできます。
 
+## GitHub Pagesで公開
+
+1. GitHubにリポジトリを作成してプッシュ:
+```bash
+git remote add origin https://github.com/あなたのユーザー名/リポジトリ名.git
+git push -u origin master
+```
+
+2. GitHubリポジトリの設定:
+   - リポジトリページで「Settings」→「Pages」を開く
+   - 「Source」で「GitHub Actions」を選択
+
+3. リポジトリ名が「onsei-player」以外の場合:
+   - `vite.config.js` の `base` パスをリポジトリ名に合わせて変更してください
+   - 例: リポジトリ名が「my-audio-player」の場合、`base: '/my-audio-player/'` に変更
+
+4. `master` または `main` ブランチにプッシュすると、自動的にビルドとデプロイが実行されます
+   - デプロイ状況は「Actions」タブで確認できます
+   - デプロイ完了後、`https://あなたのユーザー名.github.io/リポジトリ名/` でアクセスできます
+
