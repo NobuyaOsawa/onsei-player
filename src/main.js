@@ -25,7 +25,9 @@ function playAudio(filename) {
   }
 
   // 新しい音声を再生
-  const audioPath = `/audio/${filename}`
+  // Viteのbaseパスを考慮したパスを生成
+  const basePath = import.meta.env.BASE_URL
+  const audioPath = `${basePath}audio/${filename}`
   currentAudio = new Audio(audioPath)
   
   currentAudio.play().catch(error => {
