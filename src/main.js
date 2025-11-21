@@ -4,6 +4,31 @@ import { audioFiles } from './audio-files.js'
 let currentAudio = null
 let currentFilename = null
 const loopStates = {} // 各音声ファイルの連続再生状態を管理
+let isSettingsOpen = false // 設定画面の表示状態
+
+// 設定値の管理
+const Settings = {
+  // 設定値を取得
+  get(key, defaultValue) {
+    const value = localStorage.getItem(`onsei-player-${key}`)
+    return value !== null ? JSON.parse(value) : defaultValue
+  },
+  
+  // 設定値を保存
+  set(key, value) {
+    localStorage.setItem(`onsei-player-${key}`, JSON.stringify(value))
+  },
+  
+  // 連続再生間隔を取得（秒）
+  getLoopInterval() {
+    return this.get('loopInterval', 0.4)
+  },
+  
+  // 連続再生間隔を設定（秒）
+  setLoopInterval(seconds) {
+    this.set('loopInterval', seconds)
+  }
+}
 
 // 音声ファイルを自動検出する関数
 async function loadAudioFiles() {
@@ -63,8 +88,9 @@ function playAudio(filename, isLoop = false) {
         if (!currentAudio || !loopStates[filename] || hasSwitched) return
         
         const remaining = currentAudio.duration - currentAudio.currentTime
-        // 残り0.4秒前になったら次の音声を開始（音声を重ねて再生）
-        if (remaining <= 0.4 && remaining > 0 && !hasSwitched) {
+        const loopInterval = Settings.getLoopInterval()
+        // 設定された間隔の秒数前になったら次の音声を開始（音声を重ねて再生）
+        if (remaining <= loopInterval && remaining > 0 && !hasSwitched) {
           hasSwitched = true
           
           // イベントリスナーを削除
@@ -229,9 +255,37 @@ async function createUI() {
 
   document.querySelector('#app').innerHTML = `
     <div class="container">
-      <h1>🎵 音声プレイヤー</h1>
+      <div class="header">
+        <h1>🎵 音声プレイヤー</h1>
+        <button class="settings-button" title="設定">
+          <span class="settings-icon">⚙️</span>
+        </button>
+      </div>
       <div class="buttons-container">
         ${buttonsHTML}
+      </div>
+    </div>
+    <div class="settings-overlay" id="settingsOverlay">
+      <div class="settings-panel">
+        <div class="settings-header">
+          <h2>設定</h2>
+          <button class="settings-close-button" title="閉じる">
+            <span>✕</span>
+          </button>
+        </div>
+        <div class="settings-content">
+          <div class="settings-item">
+            <label for="loopInterval">連続再生間隔（秒）</label>
+            <div class="settings-input-group">
+              <input type="number" id="loopInterval" min="0" max="2" step="0.1" value="${Settings.getLoopInterval()}">
+              <span class="settings-unit">秒</span>
+            </div>
+            <p class="settings-description">連続再生時に次の音声を開始するタイミングを設定します（0.0〜2.0秒）</p>
+          </div>
+        </div>
+        <div class="settings-footer">
+          <button class="settings-save-button">保存</button>
+        </div>
       </div>
     </div>
   `
@@ -268,6 +322,78 @@ async function createUI() {
       toggleLoop(filename)
     })
   })
+
+  // 設定ボタンのイベントリスナー
+  const settingsButton = document.querySelector('.settings-button')
+  const settingsOverlay = document.querySelector('#settingsOverlay')
+  const settingsCloseButton = document.querySelector('.settings-close-button')
+  const settingsSaveButton = document.querySelector('.settings-save-button')
+  const loopIntervalInput = document.querySelector('#loopInterval')
+
+  settingsButton.addEventListener('click', () => {
+    openSettings()
+  })
+
+  settingsCloseButton.addEventListener('click', () => {
+    closeSettings()
+  })
+
+  settingsSaveButton.addEventListener('click', () => {
+    saveSettings()
+  })
+
+  // オーバーレイをクリックで閉じる
+  settingsOverlay.addEventListener('click', (e) => {
+    if (e.target === settingsOverlay) {
+      closeSettings()
+    }
+  })
+}
+
+// 設定画面を開く
+function openSettings() {
+  isSettingsOpen = true
+  const settingsOverlay = document.querySelector('#settingsOverlay')
+  const loopIntervalInput = document.querySelector('#loopInterval')
+  
+  // 現在の設定値を反映
+  loopIntervalInput.value = Settings.getLoopInterval()
+  
+  settingsOverlay.classList.add('active')
+  document.body.style.overflow = 'hidden' // スクロールを無効化
+}
+
+// 設定画面を閉じる
+function closeSettings() {
+  isSettingsOpen = false
+  const settingsOverlay = document.querySelector('#settingsOverlay')
+  settingsOverlay.classList.remove('active')
+  document.body.style.overflow = '' // スクロールを有効化
+}
+
+// 設定を保存
+function saveSettings() {
+  const loopIntervalInput = document.querySelector('#loopInterval')
+  const value = parseFloat(loopIntervalInput.value)
+  
+  // 値の検証
+  if (isNaN(value) || value < 0 || value > 2) {
+    alert('連続再生間隔は0.0〜2.0秒の範囲で設定してください。')
+    return
+  }
+  
+  Settings.setLoopInterval(value)
+  closeSettings()
+  
+  // 保存完了のフィードバック
+  const saveButton = document.querySelector('.settings-save-button')
+  const originalText = saveButton.textContent
+  saveButton.textContent = '保存しました！'
+  saveButton.style.background = '#4CAF50'
+  setTimeout(() => {
+    saveButton.textContent = originalText
+    saveButton.style.background = ''
+  }, 1000)
 }
 
 // アプリを初期化
