@@ -4,7 +4,8 @@ import './style.css'
 const audioFiles = [
   // ここに音声ファイル名を追加してください
   // 例: 'sound1.mp3', 'sound2.mp3'
-  'paypay.mp3'
+  'paypay.mp3',
+  'sheee.mp3'
 ]
 
 let currentAudio = null
