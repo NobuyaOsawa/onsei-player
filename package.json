@@ -4,8 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "generate-audio-list": "node scripts/generate-audio-list.js",
+    "dev": "npm run generate-audio-list && vite",
+    "build": "npm run generate-audio-list && vite build",
     "preview": "vite preview",
     "cap:add": "cap add",
     "cap:sync": "cap sync",

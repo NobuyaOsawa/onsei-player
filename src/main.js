@@ -1,12 +1,5 @@
 import './style.css'
-
-// 音声ファイルのリスト（public/audioフォルダ内のファイルを指定）
-const audioFiles = [
-  // ここに音声ファイル名を追加してください
-  // 例: 'sound1.mp3', 'sound2.mp3'
-  'paypay.mp3',
-  'しーっ.mp3'
-]
+import { audioFiles } from './audio-files.js'
 
 let currentAudio = null
 let currentFilename = null
@@ -14,8 +7,7 @@ const loopStates = {} // 各音声ファイルの連続再生状態を管理
 
 // 音声ファイルを自動検出する関数
 async function loadAudioFiles() {
-  // 開発環境では、手動でリストを管理します
-  // 本番環境では、サーバーからリストを取得することも可能です
+  // ビルド時に生成された音声ファイルリストを返す
   return audioFiles
 }
 
@@ -29,6 +21,11 @@ function playAudio(filename, isLoop = false) {
     // 前の音声のボタン状態を更新
     if (prevFilename) {
       updateButtonState(prevFilename, false)
+      // 前の音声のリピート状態もOFFにする（他のボタンを操作した時）
+      if (loopStates[prevFilename] && prevFilename !== filename) {
+        loopStates[prevFilename] = false
+        updateLoopIcon(prevFilename)
+      }
     }
   }
 
@@ -49,11 +46,87 @@ function playAudio(filename, isLoop = false) {
     updateButtonState(filename, true)
   })
 
-  currentAudio.onended = () => {
-    // 連続再生がONの場合、自動的に再開
-    if (loopStates[filename]) {
-      playAudio(filename, true)
-    } else {
+  // 連続再生の場合、音声の終了間際に次の音声を開始
+  if (loopStates[filename]) {
+    let timeUpdateHandler = null
+    let hasSwitched = false
+    
+    const setupSeamlessLoop = () => {
+      if (!loopStates[filename] || !currentAudio || hasSwitched) return
+      
+      // 次の音声を先読み
+      const nextAudio = new Audio(audioPath)
+      nextAudio.preload = 'auto'
+      
+      // 残り時間を監視して、終了間際に次の音声を開始
+      timeUpdateHandler = () => {
+        if (!currentAudio || !loopStates[filename] || hasSwitched) return
+        
+        const remaining = currentAudio.duration - currentAudio.currentTime
+        // 残り0.4秒前になったら次の音声を開始（音声を重ねて再生）
+        if (remaining <= 0.4 && remaining > 0 && !hasSwitched) {
+          hasSwitched = true
+          
+          // イベントリスナーを削除
+          if (timeUpdateHandler) {
+            currentAudio.removeEventListener('timeupdate', timeUpdateHandler)
+          }
+          
+          // 次の音声を先に開始（音声を重ねて再生して途切れを防ぐ）
+          nextAudio.play().catch(error => {
+            console.error('次の音声の再生に失敗しました:', error)
+            hasSwitched = false
+            // エラー時は通常の方法で再開
+            if (loopStates[filename]) {
+              playAudio(filename, true)
+            }
+            return
+          })
+          
+          // 次の音声が開始されたら、短い遅延後に現在の音声を停止
+          setTimeout(() => {
+            if (currentAudio) {
+              currentAudio.pause()
+              currentAudio.currentTime = 0
+            }
+            // 現在の音声を次の音声に切り替え
+            currentAudio = nextAudio
+            hasSwitched = false
+            
+            // 次の音声のイベントリスナーを設定
+            currentAudio.addEventListener('play', () => {
+              updateButtonState(filename, true)
+            })
+            
+            // 再帰的に次のループを設定
+            if (loopStates[filename]) {
+              setupSeamlessLoop()
+            }
+          }, 50) // 50ms後に切り替え（音声を重ねて再生）
+        }
+      }
+      
+      // timeupdateイベントで残り時間を監視
+      currentAudio.addEventListener('timeupdate', timeUpdateHandler)
+    }
+    
+    // 音声のメタデータが読み込まれたらループ設定
+    currentAudio.addEventListener('loadedmetadata', setupSeamlessLoop)
+    
+    // 既にメタデータが読み込まれている場合
+    if (currentAudio.readyState >= 2) {
+      setupSeamlessLoop()
+    }
+    
+    // フォールバック: onendedイベントでも次の音声を開始
+    currentAudio.onended = () => {
+      if (loopStates[filename] && !hasSwitched) {
+        // timeupdateで検出できなかった場合のフォールバック
+        playAudio(filename, true)
+      }
+    }
+  } else {
+    currentAudio.onended = () => {
       currentAudio = null
       currentFilename = null
       // 再生終了時にボタンの再生中スタイルを解除
